@@ -27,6 +27,8 @@ English and Kazakh. English makes the game playable and reviewable by judges; Ka
 
 Meta has no TTS model, so Soniox fills a real gap. List it in the README as the one non-Meta piece and say why.
 
+To consider later: [Geko](https://geko.sh/models), a Kazakh-focused voice API (one key, one balance). Tokay-1.0 TTS speaks Kazakh with six voices; Seta-1.0 STT handles Kazakh and Russian, including switching between them mid-sentence. TypeScript SDK and REST API. Pricing and license terms aren't on the models page. Could replace or back up Soniox for Kazakh; it has no English.
+
 Keeping Muse Voice Transcribe in the loop matters for the "Use of Meta AI tooling" score (25%), which rewards using several Meta models.
 
 ## Meta models
