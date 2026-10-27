@@ -1,191 +1,65 @@
-# kazakh-rpg
+# Бір күн ауылда · A Day in the Aul
 
-Interactive voice-driven role-play game for learning Kazakh culture and values, built with Meta models.
+A voice-driven 3D role-playing game about Kazakh language and culture, built with Meta models.
+
+You live one autumn day in an 18th-century Kazakh camp. You bring the horse herd in before a blizzard, host a traveler the storm drives to your yurt, and ride out with your grandfather's golden eagle on the first snow. You talk to everyone with your voice, in English or Kazakh. A game-master agent judges what you say and do against real customs, and the family remembers it. In the evening, the elder gives you a personal blessing (бата) and a painting of your day.
 
 Built from scratch during the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon/details) (Oct 27 – Nov 4, 2026). All code in this repo was written during the hackathon.
 
----
+## How it uses Meta models
 
-Welcome to your new TanStack Start app!
+| Model | Use |
+| --- | --- |
+| **Muse Spark 1.3** | The game master. Each turn it takes your words or actions and acts only through tools: `npc_say`, `adjust_standing`, `remember`, `advance_quest`, `trigger_event`, `teach`, `end_conversation`. The engine checks every call against the quest graph, so the model can't skip gameplay. Reasoning summaries appear in the in-game GM log (press `` ` ``). The finale is a multi-step agent: it calls `recall` and `consult_customs` before it calls `compose_bata`. |
+| **Muse Voice Transcribe** | Player speech, biased toward Kazakh cultural vocabulary such as қонақ, төр and бүркіт. |
+| **Muse Image** | NPC portraits and title art at build time (`bun run gen:art`), and the end-of-day painting at runtime. |
+| **Muse Code** | Part of the development. |
 
-# Getting Started
+Not Meta:
 
-To run this application:
+- **[Soniox](https://soniox.com) TTS** voices the NPCs, because Meta has no text-to-speech model. It speaks Kazakh and English with the same voices. Without a key, the game falls back to the browser's speech synthesis.
+- **Soniox STT** can optionally transcribe Kazakh (`KK_STT_PROVIDER=soniox`). Muse Voice Transcribe doesn't list Kazakh among its languages. It handled synthetic Kazakh reasonably, and the decision waits on tests with real speakers.
+
+## Run it
 
 ```bash
 bun install
-bun --bun run dev
+cp .env.example .env   # add META_AI_API_KEY (and SONIOX_API_KEY for voices)
+bun --bun run dev      # http://localhost:3000
 ```
 
-# Building For Production
+Controls:
 
-To build this application for production:
+| Key | Action |
+| --- | --- |
+| WASD | Move |
+| Shift | Run, or gallop when mounted |
+| Drag the mouse | Look around |
+| E | Talk or interact |
+| F | Mount or dismount your horse |
+| R | Release the eagle |
+| Hold V | Speak (you can also type) |
+| J | Journal |
+| `` ` `` | Game-master log |
+| F2 | Dev panel: jump to a quest or switch language |
 
-```bash
-bun --bun run build
-```
+`/lab` tests the voice and game-master loop without the 3D world.
 
-## Styling
+## Scripts
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+| Command | What it does |
+| --- | --- |
+| `bun run test` | Engine unit tests (quest graph, effect validation) |
+| `bun run eval:gm` | Replays scripted scenarios against Muse Spark and checks the tool calls: etiquette, rudeness, jailbreaks, Kazakh input with transcription errors |
+| `bun run gen:art` | Generates portraits and title art with Muse Image |
+| `bun run build && bun run start` | Production build, served by `server.ts` (Bun). A `Dockerfile` is included. |
+| `bun run typecheck` | TypeScript |
 
-### Removing Tailwind CSS
+## How it's built
 
-If you prefer not to use Tailwind CSS:
+- TanStack Start with React 19. The game route (`/play`) is client-only, built with React Three Fiber. Everything is procedural low-poly: terrain, grass, yurts, people, horses, fox and eagle.
+- `src/game/engine` is pure and shared by client and server. It holds the story state, the effect types, and validation against the quest graph. The client owns the state (saved in localStorage), and the server is stateless.
+- `src/server` holds every API key. Server functions run the game master and the finale; API routes stream TTS and accept recorded audio.
+- `src/content/aul-18c` holds the era's content: NPCs, quests and `customs.md`, the knowledge base the game master grades against. A new era is a new folder.
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+See [docs/implementation-plan.md](docs/implementation-plan.md) for the plan and status, and [CREDITS.md](CREDITS.md) for assets.
